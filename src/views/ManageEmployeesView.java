@@ -1,37 +1,54 @@
 package views;
 
 import javax.swing.*;
+import controllers.AdminController;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 public class ManageEmployeesView extends JFrame {
-    
+    private JButton managerButton;
+    private JButton technicianButton;
+    private JButton directorButton;
+
     public ManageEmployeesView() {
         setTitle("Manage Employees");
-        setSize(600, 400);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 300);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
-        
-        // Create a main panel
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout());
+        setLayout(new GridBagLayout());
 
-        // Add a label
-        JLabel label = new JLabel("Employee Management", JLabel.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 24));
-        mainPanel.add(label, BorderLayout.NORTH);
-        
-        // Create a table for employee information
-        String[] columns = {"ID", "Name", "Position", "Salary"};
-        Object[][] data = {}; // Fetch this from the database
-        JTable employeeTable = new JTable(data, columns);
-        JScrollPane scrollPane = new JScrollPane(employeeTable);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Add main panel to frame
-        add(mainPanel);
+        managerButton = createStyledButton("Manage Managers", new Color(0, 102, 204)); // Blue
+        technicianButton = createStyledButton("Manage Technicians", new Color(0, 153, 76)); // Green
+        directorButton = createStyledButton("Manage Directors", new Color(204, 0, 0)); // Red
+
+        addButtonWithGap(managerButton, 0);
+        addButtonWithGap(technicianButton, 1);
+        addButtonWithGap(directorButton, 2);
+
+        managerButton.addActionListener(e -> new AdminController().manageManagers());
+        technicianButton.addActionListener(e -> new AdminController().manageTechnicians());
+        directorButton.addActionListener(e -> new AdminController().manageDirectors());
     }
-    
-    public static void main(String[] args) {
-        new ManageEmployeesView().setVisible(true);
+
+    private JButton createStyledButton(String text, Color backgroundColor) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 16));
+        button.setForeground(Color.WHITE);
+        button.setBackground(backgroundColor);
+        button.setFocusPainted(false);
+        
+        // Set padding
+        button.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20)); // Top, Left, Bottom, Right
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        
+        return button;
+    }
+
+    private void addButtonWithGap(JButton button, int gridY) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = gridY;
+        gbc.insets = new Insets(10, 0, 10, 0); // Gap between buttons
+        add(button, gbc);
     }
 }

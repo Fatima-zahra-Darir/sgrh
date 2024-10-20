@@ -54,7 +54,7 @@ public class AdminView extends JFrame {
         manageDepartmentsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new AdminController().showManageDepartments(AdminView.this);
+                new AdminController().showManageDepatements(AdminView.this);
             }
         });
 

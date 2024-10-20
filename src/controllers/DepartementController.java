@@ -1,36 +1,25 @@
-package services;
+package controllers;
 
 import models.Departement; // Assuming you have a Departement model
+import services.DepartementService;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
-public class DepartementService {
+import services.DatabaseConnection;
+public class DepartementController {
     private Connection connection;
 
-    public DepartementService() {
+    public DepartementController() {
+
         this.connection = DatabaseConnection.getConnection();
     }
 
     // Get all departements
     public List<Departement> getAllDepartements() {
-        List<Departement> departements = new ArrayList<>();
-        String query = "SELECT * FROM departement"; // Adjust the table name as needed
-        
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                Departement departement = new Departement();
-                // Assuming Departement has appropriate setters
-                departement.setId(rs.getInt("id"));
-                departement.setNom(rs.getString("name"));
-                departements.add(departement);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return departements;
-    }
+        DepartementService obj = new DepartementService();
+        obj.getAllDepartements();
+    } 
 
     // Add a new departement
     public void addDepartement(Departement departement) {

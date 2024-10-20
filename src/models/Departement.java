@@ -9,10 +9,13 @@ public class Departement {
     private String nom;
     private List<Employe> employes;
 
-    public Departement(/* int id, String nom */) {
-        // this.id = id;
-        // this.nom = nom;
+    public Departement() {
         this.employes = new ArrayList<>();
+    }
+    public Departement(int id, String nom)
+    {
+        this.id = id;
+        this.nom = nom;
     }
 
     public void ajouterEmploye(String nom, String prenom, Date dateNaissance, String email, 
