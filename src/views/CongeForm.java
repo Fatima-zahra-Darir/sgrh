@@ -13,14 +13,12 @@ public class CongeForm extends JFrame {
     private JTextArea raisonField;
     private JButton logoutBtn, submitBtn;
     private String employeeId;
-    // private String employeeName;
 
     public CongeForm( ) {
          
     }
     public CongeForm(String employeeId/* , String employeeName */) {
         this.employeeId = employeeId;
-        // this.employeeName = employeeName;
 
         initializeComponents();
         setupLayout();

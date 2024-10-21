@@ -18,13 +18,11 @@ public class LoginView extends JFrame {
     private LoginController loginController; 
 
     public LoginView() {
-        // Basic setup of the login view
         setTitle("Login");
         setSize(300, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Initialize the database connection
         connection = DatabaseConnection.getConnection();
         loginController = new LoginController(); // Initialize the controller
 

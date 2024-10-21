@@ -23,7 +23,6 @@ public class ManagerView extends JFrame {
     private String poste;
 
     public ManagerView(ResultSet rs) throws SQLException {
-        // Extract data from ResultSet
         this.id = rs.getString("id");
         this.nom = rs.getString("nom");
         this.prenom = rs.getString("prenom");
@@ -38,17 +37,14 @@ public class ManagerView extends JFrame {
 
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // Panel for Personal Info
         JPanel personalInfoPanel = createPersonalInfoPanel();
         tabbedPane.addTab("Mes Informations", personalInfoPanel);
 
-        // Panel for Leave Requests
         JPanel leaveRequestsPanel = createLeaveRequestsPanel();
         tabbedPane.addTab("Mes Demandes", leaveRequestsPanel);
 
         add(tabbedPane, BorderLayout.CENTER);
 
-        // Automatically refresh the leave requests every minute
         Timer timer = new Timer(60000, e -> refreshLeaveRequests());
         timer.start();
     }
@@ -56,13 +52,11 @@ public class ManagerView extends JFrame {
     private JPanel createPersonalInfoPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        // Define table columns
         String[] columns = {"ID", "Nom", "Prénom", "Téléphone", "Email", "Poste"};
         personalInfoTableModel = new DefaultTableModel(columns, 0);
         personalInfoTable = new JTable(personalInfoTableModel);
         personalInfoTable.setDefaultEditor(Object.class, null);
 
-        // Load data into the table
         loadPersonalData();
 
         panel.add(new JScrollPane(personalInfoTable), BorderLayout.CENTER);
