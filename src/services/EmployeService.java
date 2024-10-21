@@ -168,6 +168,7 @@ public class EmployeService {
                 return "Directeur";
             default:
                 throw new IllegalArgumentException("Table inconnue: " + tableName);
-        }
+        
+            }
     }
 }

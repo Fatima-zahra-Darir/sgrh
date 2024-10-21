@@ -1,4 +1,4 @@
-package controllers;
+/* package controllers;
 
 import models.Departement; // Assuming you have a Departement model
 import services.DepartementService;
@@ -58,3 +58,4 @@ public class DepartementController {
         }
     }
 }
+ */

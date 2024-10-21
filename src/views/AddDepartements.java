@@ -5,32 +5,27 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
-// import models.Departement;
+import services.DepartementService;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import services.EmployeService;
+public class AddDepartements extends JFrame {
 
-public class AddEmployes extends JFrame {
-
-    private JTextField nameField, surnameField, phoneField, emailField;
-    private JComboBox<String> positionComboBox;
-    // private JComboBox<Departement> positionComboBox1;
-
+    private JTextField nomField, descriptionField;
     private JButton logoutBtn, submitBtn, updateBtn, deleteBtn;
     private JTable table;
     private DefaultTableModel tableModel;
-    private EmployeService employeService;
+    private DepartementService departementService;
 
     private String selectedId;
 
-    public AddEmployes() {
-        employeService = new EmployeService();
+    public AddDepartements() {
+        departementService = new DepartementService();
 
         // Window initialization
-        setTitle("Admin Employee Management");
+        setTitle("Admin Department Management");
         setSize(800, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -44,7 +39,7 @@ public class AddEmployes extends JFrame {
         topPanel.add(logoutBtn, BorderLayout.EAST);
 
         // Title
-        JLabel title = new JLabel("ADMIN EMPLOYEE MANAGEMENT", JLabel.CENTER);
+        JLabel title = new JLabel("ADMIN DEPARTMENT MANAGEMENT", JLabel.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 18));
         topPanel.add(title, BorderLayout.CENTER);
 
@@ -55,38 +50,23 @@ public class AddEmployes extends JFrame {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
         // Form panel for input fields and labels
-        JPanel formPanel = new JPanel(new GridLayout(6, 2, 10, 10)); // 5 rows, 2 columns
+        JPanel formPanel = new JPanel(new GridLayout(3, 2, 10, 10)); // 3 rows, 2 columns
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         // Labels and input fields
         formPanel.add(new JLabel("Nom:"));
-        nameField = new JTextField(15);
-        formPanel.add(nameField);
+        nomField = new JTextField(15);
+        formPanel.add(nomField);
 
-        formPanel.add(new JLabel("Prénom:"));
-        surnameField = new JTextField(15);
-        formPanel.add(surnameField);
-
-        formPanel.add(new JLabel("Numéro de téléphone:"));
-        phoneField = new JTextField(15);
-        formPanel.add(phoneField);
-
-        formPanel.add(new JLabel("Email:"));
-        emailField = new JTextField(15);
-        formPanel.add(emailField);
-
-        formPanel.add(new JLabel("Poste:"));
-        positionComboBox = new JComboBox<>(new String[]{"Manager", "Technicien", "Directeur"});
-        formPanel.add(positionComboBox);
-
-        // formPanel.add(new JLabel("Departement:"));
-        // positionComboBox1 = new EmployeService().fetchDep();
-        // formPanel.add(positionComboBox1);
+        formPanel.add(new JLabel("Description:"));
+        descriptionField = new JTextField(15);
+        formPanel.add(descriptionField);
 
         mainPanel.add(formPanel);
-        // Submit Button Panel for adding a new employee
+
+        // Submit Button Panel for adding a new department
         JPanel submitPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        submitBtn = new JButton("Ajouter Employé");
+        submitBtn = new JButton("Ajouter Département");
         submitPanel.add(submitBtn);
         mainPanel.add(submitPanel);
 
@@ -99,8 +79,8 @@ public class AddEmployes extends JFrame {
         buttonPanel.add(deleteBtn);
         mainPanel.add(buttonPanel);
 
-        // Table to display employees
-        String[] columns = {"id", "Nom", "Prénom", "Numéro de téléphone", "Email", "Poste"};
+        // Table to display departments
+        String[] columns = {"id", "Nom", "Description"};
         tableModel = new DefaultTableModel(columns, 0);
         table = new JTable(tableModel);
 
@@ -108,7 +88,7 @@ public class AddEmployes extends JFrame {
         table.setDefaultEditor(Object.class, null);
 
         // Populate the table with existing data from the database
-        employeService.afficherTous(tableModel);
+        departementService.afficherTous(tableModel);
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(5, 20, 20, 20));
@@ -122,69 +102,63 @@ public class AddEmployes extends JFrame {
 
     // Method to Add Action Listeners to Buttons
     private void addActionListeners() {
-        // Add Employee Button Listener
+        // Add Department Button Listener
         submitBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String nom = nameField.getText().trim();
-                String prenom = surnameField.getText().trim();
-                String telephone = phoneField.getText().trim();
-                String email = emailField.getText().trim();
-                String poste = positionComboBox.getSelectedItem().toString();
+                String nom = nomField.getText().trim();
+                String description = descriptionField.getText().trim();
 
                 // Check if any input field is empty
-                if (nom.isEmpty() || prenom.isEmpty() || telephone.isEmpty() || email.isEmpty() || poste.isEmpty()) {
+                if (nom.isEmpty() || description.isEmpty()) {
                     JOptionPane.showMessageDialog(null, "Veuillez remplir tous les champs!");
                     return;
                 }
 
-                // Add the new employee to the database
-                employeService.ajouterEmploye(nom, prenom, telephone, email, poste);
+                // Add the new department to the database
+                departementService.ajouterDepartement(nom, description);
 
                 // Refresh the table with updated data
-                employeService.afficherTous(tableModel);
+                departementService.afficherTous(tableModel);
                 clearFields(); // Clear input fields after adding
             }
         });
 
-        // Update Employee Button Listener
+        // Update Department Button Listener
         updateBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int selectedRow = table.getSelectedRow();
                 if (selectedRow != -1) {
-                    String nom = nameField.getText().trim();
-                    String prenom = surnameField.getText().trim();
-                    String telephone = phoneField.getText().trim();
-                    String email = emailField.getText().trim();
-                    String poste = positionComboBox.getSelectedItem().toString();
+                    String nom = nomField.getText().trim();
+                    String description = descriptionField.getText().trim();
 
-                    // Update the selected employee in the database
+                    // Update the selected department in the database
                     int id = Integer.valueOf(selectedId);
 
-                    employeService.mettreAjourEmploye(id, nom, prenom, telephone, email, poste);
+                    departementService.mettreAjourDepartement(id, nom, description);
 
                     // Refresh the table
-                    employeService.afficherTous(tableModel);
+                    departementService.afficherTous(tableModel);
                     clearFields();
                 } else {
-                    JOptionPane.showMessageDialog(null, "Veuillez sélectionner un employé à modifier.");
+                    JOptionPane.showMessageDialog(null, "Veuillez sélectionner un département à modifier.");
                 }
             }
         });
 
-        // Delete Employee Button Listener
+        // Delete Department Button Listener
         deleteBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int selectedRow = table.getSelectedRow();
                 if (selectedRow != -1) {
                     int id = Integer.valueOf(selectedId);
-                    employeService.supprimerEmploye(id); // Delete the employee
-                    employeService.afficherTous(tableModel); // Refresh the table
+                    departementService.supprimerDepartement(id); // Delete the department
+                    departementService.afficherTous(tableModel); // Refresh the table
                     clearFields();
                 } else {
-                    JOptionPane.showMessageDialog(null, "Veuillez sélectionner un employé à supprimer.");
+                    JOptionPane.showMessageDialog(null, "Veuillez sélectionner un département à supprimer.");
                 }
             }
         });
@@ -196,11 +170,8 @@ public class AddEmployes extends JFrame {
                 if (!event.getValueIsAdjusting() && table.getSelectedRow() != -1) {
                     int selectedRow = table.getSelectedRow();
                     selectedId = tableModel.getValueAt(selectedRow, 0).toString();
-                    nameField.setText(tableModel.getValueAt(selectedRow, 1).toString());
-                    surnameField.setText(tableModel.getValueAt(selectedRow, 2).toString());
-                    phoneField.setText(tableModel.getValueAt(selectedRow, 3).toString());
-                    emailField.setText(tableModel.getValueAt(selectedRow, 4).toString());
-                    positionComboBox.setSelectedItem(tableModel.getValueAt(selectedRow, 5).toString());
+                    nomField.setText(tableModel.getValueAt(selectedRow, 1).toString());
+                    descriptionField.setText(tableModel.getValueAt(selectedRow, 2).toString());
                 }
             }
         });
@@ -218,18 +189,15 @@ public class AddEmployes extends JFrame {
 
     // Method to Clear Input Fields
     private void clearFields() {
-        nameField.setText("");
-        surnameField.setText("");
-        phoneField.setText("");
-        emailField.setText("");
-        positionComboBox.setSelectedIndex(0);
+        nomField.setText("");
+        descriptionField.setText("");
     }
 
-    // Main method to launch the Admin View
+    // Main method to launch the Admin View for managing departments
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            AddEmployes addEmployes = new AddEmployes();
-            addEmployes.setVisible(true);
+            AddDepartements addDepartements = new AddDepartements();
+            addDepartements.setVisible(true);
         });
     }
 }

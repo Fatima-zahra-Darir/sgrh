@@ -1,69 +1,75 @@
 package services;
 
-import models.Departement; // Assuming you have a Departement model
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import javax.swing.table.DefaultTableModel;
 
 public class DepartementService {
-    private Connection connection;
 
+    private Connection conn;
+
+    // Constructor to establish the connection
     public DepartementService() {
-        this.connection = DatabaseConnection.getConnection();
+        this.conn = DatabaseConnection.getConnection();
+
     }
 
-    // Get all departements
-    public List<Departement> getAllDepartements() {
-        List<Departement> departements = new ArrayList<>();
-        String query = "SELECT * FROM departement"; // Adjust the table name as needed
-        
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+    // Method to add a new department
+    public void ajouterDepartement(String nom, String description) {
+        String query = "INSERT INTO departements (nom, description) VALUES (?, ?)";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, nom);
+            ps.setString(2, description);
+            ps.executeUpdate();
+            System.out.println("Département ajouté avec succès.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to update a department
+    public void mettreAjourDepartement(int id, String nom, String description) {
+        String query = "UPDATE departements SET nom = ?, description = ? WHERE id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, nom);
+            ps.setString(2, description);
+            ps.setInt(3, id);
+            ps.executeUpdate();
+            System.out.println("Département mis à jour avec succès.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to delete a department
+    public void supprimerDepartement(int id) {
+        String query = "DELETE FROM departements WHERE id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            System.out.println("Département supprimé avec succès.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to fetch and display all departments in the table
+    public void afficherTous(DefaultTableModel tableModel) {
+        // Clear the existing rows in the table model
+        tableModel.setRowCount(0);
+
+        String query = "SELECT id, nom, description FROM departements";
+        try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
-                Departement departement = new Departement();
-                // Assuming Departement has appropriate setters
-                departement.setId(rs.getInt("id"));
-                departement.setNom(rs.getString("name"));
-                departements.add(departement);
+                int id = rs.getInt("id");
+                String nom = rs.getString("nom");
+                String description = rs.getString("description");
+
+                // Add the row to the table model
+                tableModel.addRow(new Object[]{id, nom, description});
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return departements;
-    }
-
-    // Add a new departement
-    public void addDepartement(Departement departement) {
-        String query = "INSERT INTO departement (name) VALUES (?)";
-        
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setString(1, departement.getNom());
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Update an existing departement
-    public void updateDepartement(Departement departement) {
-        String query = "UPDATE departement SET name = ? WHERE id = ?";
-        
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setString(1, departement.getNom());
-            pstmt.setInt(2, departement.getId());
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Delete a departement
-    public void deleteDepartement(int departementId) {
-        String query = "DELETE FROM departement WHERE id = ?";
-        
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setInt(1, departementId);
-            pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }

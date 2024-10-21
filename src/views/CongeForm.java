@@ -1,125 +1,131 @@
 package views;
 
+import services.DatabaseConnection;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 public class CongeForm extends JFrame {
-
-    private JTextField dateDebutField, dateFinField, raisonField;
+    private JTextField dateDebutField, dateFinField;
+    private JTextArea raisonField;
     private JButton logoutBtn, submitBtn;
+    private String employeeId;
+    // private String employeeName;
 
-    public CongeForm() {
-        // Window initialization
-        setTitle("Demande de Congé");
-        setSize(800, 400);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+    public CongeForm( ) {
+         
+    }
+    public CongeForm(String employeeId/* , String employeeName */) {
+        this.employeeId = employeeId;
+        // this.employeeName = employeeName;
 
-        // Top Panel for title and logout button
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBorder(BorderFactory.createEmptyBorder(30, 10, 10, 10));
-
-        // Logout button
-        logoutBtn = new JButton("Déconnecter");
-        topPanel.add(logoutBtn, BorderLayout.EAST);
-
-        // Title
-        JLabel title = new JLabel("DEMANDE DE CONGÉ", JLabel.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 18));
-        topPanel.add(title, BorderLayout.CENTER);
-
-        add(topPanel, BorderLayout.NORTH);
-
-        // Main panel to hold form
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-
-        // Form panel for input fields and labels
-        JPanel formPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        formPanel.setBorder(BorderFactory.createEmptyBorder(40, 0, 0, 0));
-
-        // Labels and input fields
-        JLabel dateDebutLabel = new JLabel("Date de Début:");
-        dateDebutField = new JTextField(10);
-        JLabel dateFinLabel = new JLabel("Date de Fin:");
-        dateFinField = new JTextField(10);
-        JLabel raisonLabel = new JLabel("Raison de Demande:");
-        raisonField = new JTextField(15);
-
-        // Add labels and fields to the form panel
-        formPanel.add(dateDebutLabel);
-        formPanel.add(dateDebutField);
-        formPanel.add(dateFinLabel);
-        formPanel.add(dateFinField);
-        formPanel.add(raisonLabel);
-        formPanel.add(raisonField);
-
-        mainPanel.add(formPanel);
-
-        // Submit Button Panel for submitting the request
-        JPanel submitPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        submitBtn = new JButton("Soumettre Demande");
-        submitPanel.add(submitBtn);
-        mainPanel.add(submitPanel);
-
-        add(mainPanel, BorderLayout.CENTER);
-
-        // Attach action listeners to buttons
+        initializeComponents();
+        setupLayout();
         addActionListeners();
     }
 
-    // Method to Add Action Listeners to Buttons
+    private void initializeComponents() {
+        setTitle("Demande de Congé");
+        setSize(800, 500);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        dateDebutField = new JTextField(10);
+        dateFinField = new JTextField(10);
+        raisonField = new JTextArea(4, 30);
+        logoutBtn = new JButton("Fermer");
+        submitBtn = new JButton("Soumettre Demande");
+    }
+
+    private void setupLayout() {
+        setLayout(new BorderLayout(10, 10));
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JLabel title = new JLabel("DEMANDE DE CONGÉ", JLabel.CENTER);
+        title.setFont(new Font("Arial", Font.BOLD, 20));
+        topPanel.add(title, BorderLayout.CENTER);
+
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.WEST;
+
+        addFormRow(formPanel, gbc, "Date de Début (dd/mm/yyyy):", dateDebutField);
+        addFormRow(formPanel, gbc, "Date de Fin (dd/mm/yyyy):", dateFinField);
+        addFormRow(formPanel, gbc, "Raison:", new JScrollPane(raisonField));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        buttonPanel.add(submitBtn);
+        buttonPanel.add(logoutBtn);
+
+        add(topPanel, BorderLayout.NORTH);
+        add(formPanel, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    private void addFormRow(JPanel panel, GridBagConstraints gbc, String labelText, Component component) {
+        gbc.gridx = 0;
+        gbc.gridy++;
+        panel.add(new JLabel(labelText), gbc);
+
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(component, gbc);
+    }
+
     private void addActionListeners() {
-        // Submit Button Listener
-        submitBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String dateDebut = dateDebutField.getText();
-                String dateFin = dateFinField.getText();
-                String raison = raisonField.getText();
+        submitBtn.addActionListener(e -> submitLeaveRequest());
+        logoutBtn.addActionListener(e -> dispose());
+    }
 
-                // Validate inputs
-                if (dateDebut.isEmpty() || dateFin.isEmpty() || raison.isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Veuillez remplir tous les champs!");
-                    return;
-                }
+    private void submitLeaveRequest() {
+        if (!validateFields()) {
+            JOptionPane.showMessageDialog(this,
+                    "Veuillez remplir tous les champs correctement",
+                    "Erreur de validation",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-                // Logic to handle the leave request submission
-                // For example, call a method to save the leave request
-                JOptionPane.showMessageDialog(null, "Demande de congé soumise:\n" +
-                        "Du: " + dateDebut + "\n" +
-                        "Au: " + dateFin + "\n" +
-                        "Raison: " + raison);
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            String sql = "INSERT INTO conges (employe_id, date_debut, date_fin,raison, statut) VALUES (?, ?, ?, ?,'en_attente')";
 
-                // Clear fields after submission
-                clearFields();
-            }
-        });
+            
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, employeeId);
+            pstmt.setString(2, dateDebutField.getText());
+            pstmt.setString(3, dateFinField.getText());
+            pstmt.setString(4, raisonField.getText());
 
-        // Logout Button Listener
-        logoutBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Close the form and return to the login view
+            int result = pstmt.executeUpdate();
+            if (result > 0) {
+                JOptionPane.showMessageDialog(this,
+                        "Demande soumise avec succès!",
+                        "Succès",
+                        JOptionPane.INFORMATION_MESSAGE);
                 dispose();
-                LoginView loginView = new LoginView();
-                loginView.setVisible(true);
             }
-        });
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Erreur lors de la soumission: " + ex.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
-    // Method to Clear Input Fields
-    private void clearFields() {
-        dateDebutField.setText("");
-        dateFinField.setText("");
-        raisonField.setText("");
+    private boolean validateFields() {
+        return !dateDebutField.getText().trim().isEmpty() &&
+               !dateFinField.getText().trim().isEmpty() &&
+               !raisonField.getText().trim().isEmpty();
     }
-
-    // Main method to launch the Conge Form
-    public static void main(String[] args) {
-        CongeForm congeForm = new CongeForm();
-        congeForm.setVisible(true);
+    public static void main(String[] args) throws Exception {
+        CongeForm data = new CongeForm("22");
+        data.setVisible(true);
     }
 }

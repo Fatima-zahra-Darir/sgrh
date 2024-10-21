@@ -1,14 +1,21 @@
 package views;
+
+import controllers.LoginController;
+
 import javax.swing.*;
-
-import models.Manager;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import services.DatabaseConnection;
 
 public class LoginView extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
+    private Connection connection;
+    private LoginController loginController; 
 
     public LoginView() {
         // Basic setup of the login view
@@ -16,6 +23,11 @@ public class LoginView extends JFrame {
         setSize(300, 200);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+
+        // Initialize the database connection
+        connection = DatabaseConnection.getConnection();
+        loginController = new LoginController(); // Initialize the controller
+
         initComponents();
     }
 
@@ -51,51 +63,44 @@ public class LoginView extends JFrame {
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Logic to authenticate the user
-                boolean authenticated = authenticateUser(usernameField.getText(), String.valueOf(passwordField.getPassword()));
-
-                if (authenticated) {
-                    // Show role selection after successful login
-                    showRoleSelection();
-                } else {
-                    JOptionPane.showMessageDialog(null, "Invalid username or password", "Error", JOptionPane.ERROR_MESSAGE);
-                }
+                String username = usernameField.getText();
+                String password = String.valueOf(passwordField.getPassword());
+                loginController.authenticateUser(username, password, LoginView.this);
             }
         });
     }
 
-    private boolean authenticateUser(String username, String password) {
-        // Authentication logic (e.g., check against database)
-        return true; // Replace with actual authentication
-    }
+    public void authenticateEmployee(String email, String id) {
+        String query = "SELECT * FROM employes WHERE email = ? AND id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            pstmt.setString(2, id);
+            ResultSet rs = pstmt.executeQuery();
 
-    private void showRoleSelection() {
-        String[] roles = {"Manager", "Directeur", "Technicien"};
-        String selectedRole = (String) JOptionPane.showInputDialog(this, 
-                "Select your role:", 
-                "Role Selection", 
-                JOptionPane.QUESTION_MESSAGE, 
-                null, 
-                roles, 
-                roles[0]);
-
-        if (selectedRole != null) {
-            // Proceed to the corresponding EmployeeView based on the role
-            launchEmployeeView(selectedRole);
+            if (rs.next()) {
+                String role = rs.getString("poste");
+                launchEmployeeView(role, rs);
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid email or ID", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    private void launchEmployeeView(String role) {
-        // Launch the corresponding EmployeeView based on the role
-        if (role.equals("Manager")) {
-            // Manager manager= new Manager();
-            new ManagerView().setVisible(true);
-        } else if (role.equals("Directeur")) {
-            new DirecteurView().setVisible(true);
-        } else if (role.equals("Technicien")) {
-            new TechnicienView().setVisible(true);
+    private void launchEmployeeView(String role, ResultSet rs) throws SQLException {
+        if (role.equalsIgnoreCase("Manager")) {
+            new ManagerView(rs).setVisible(true);
+        } else if (role.equalsIgnoreCase("Directeur")) {
+            new DirecteurView(rs).setVisible(true);
+        } else if (role.equalsIgnoreCase("Technicien")) {
+            new TechnicienView(rs).setVisible(true);
         }
         dispose(); // Close the login view
+    }
+
+    public void displayErrorMessage(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     public static void main(String[] args) {

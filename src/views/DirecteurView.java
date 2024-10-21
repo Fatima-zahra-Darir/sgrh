@@ -1,67 +1,136 @@
 package views;
-
+import services.DatabaseConnection;
 import javax.swing.*;
-import java.awt.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class DirecteurView extends JFrame {
-    private JTable table;
-    private DefaultTableModel tableModel;
+    private JTable personalInfoTable;
+    private JTable leaveRequestsTable;
+    
+    private DefaultTableModel personalInfoTableModel;
+    private DefaultTableModel leaveRequestsTableModel;
 
-    // Mock data for demonstration
-    private String name = "Jean Dupuis";
-    private String position = "Directeur";
-    private String salary = "8000";
+    private String id;
+    private String nom;
+    private String prenom;
+    private String telephone;
+    private String email;
+    private String poste;
 
-    public DirecteurView() {
-        setTitle("Directeur View");
-        setSize(400, 200);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+    public DirecteurView(ResultSet rs) throws SQLException {
+        // Extract data from ResultSet
+        this.id = rs.getString("id");
+        this.nom = rs.getString("nom");
+        this.prenom = rs.getString("prenom");
+        this.telephone = rs.getString("telephone");
+        this.email = rs.getString("email");
+        this.poste = rs.getString("poste");
 
-        // Top Panel for title and logout button
-        JPanel topPanel = new JPanel(new BorderLayout());
-        JButton logoutBtn = new JButton("Déconnecter");
-        topPanel.add(logoutBtn, BorderLayout.EAST);
-        JLabel title = new JLabel("VUE DU DIRECTEUR", JLabel.CENTER);
-        title.setFont(new Font("Arial", Font.BOLD, 18));
-        topPanel.add(title, BorderLayout.CENTER);
-        add(topPanel, BorderLayout.NORTH);
+        setTitle("Directeur - " + nom + " " + prenom);
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
 
-        // Table for displaying user info
-        String[] columns = {"Nom", "Poste", "Salaire"};
-        tableModel = new DefaultTableModel(columns, 0);
-        table = new JTable(tableModel);
-        table.setDefaultEditor(Object.class, null);
-        
-        // Load current user's data
-        loadData();
+        JTabbedPane tabbedPane = new JTabbedPane();
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, BorderLayout.CENTER);
+        // Panel for Personal Info
+        JPanel personalInfoPanel = createPersonalInfoPanel();
+        tabbedPane.addTab("Mes Informations", personalInfoPanel);
 
-        // Button panel at the bottom with margin adjustments
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        JButton openFormBtn = new JButton("Remplir Demande");
-        buttonPanel.add(openFormBtn);
-        add(buttonPanel, BorderLayout.SOUTH);
+        // Panel for Leave Requests
+        JPanel leaveRequestsPanel = createLeaveRequestsPanel();
+        tabbedPane.addTab("Mes Demandes", leaveRequestsPanel);
 
-        // Action listener for the button
-        openFormBtn.addActionListener(e -> new CongeForm().setVisible(true));
+        add(tabbedPane, BorderLayout.CENTER);
 
-        // Logout functionality
-        logoutBtn.addActionListener(e -> {
-            dispose();
-            new LoginView().setVisible(true);
-        });
+        // Automatically refresh the leave requests every minute
+        Timer timer = new Timer(60000, e -> refreshLeaveRequests());
+        timer.start();
     }
 
-    private void loadData() {
-        // Load current user's data into the table
-        tableModel.addRow(new String[]{name, position, salary});
+    private JPanel createPersonalInfoPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // Define table columns
+        String[] columns = {"ID", "Nom", "Prénom", "Téléphone", "Email", "Poste"};
+        personalInfoTableModel = new DefaultTableModel(columns, 0);
+        personalInfoTable = new JTable(personalInfoTableModel);
+        personalInfoTable.setDefaultEditor(Object.class, null);
+
+        // Load data into the table
+        loadPersonalData();
+
+        panel.add(new JScrollPane(personalInfoTable), BorderLayout.CENTER);
+        return panel;
     }
 
-    public static void main(String[] args) {
-        new DirecteurView().setVisible(true);
+    private void loadPersonalData() {
+        // Clear any existing rows and add the director's personal data
+        personalInfoTableModel.setRowCount(0);
+        personalInfoTableModel.addRow(new Object[]{id, nom, prenom, telephone, email, poste});
+    }
+
+    private JPanel createLeaveRequestsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        String[] columns = {"Date Début", "Date Fin", "Raison", "Statut", "Réponse Admin"};
+        leaveRequestsTableModel = new DefaultTableModel(columns, 0);
+        leaveRequestsTable = new JTable(leaveRequestsTableModel);
+        leaveRequestsTable.setDefaultEditor(Object.class, null);
+
+        JButton newRequestBtn = new JButton("Nouvelle Demande");
+        JButton refreshBtn = new JButton("Actualiser");
+
+        newRequestBtn.addActionListener(e -> new CongeForm(id).setVisible(true));
+        refreshBtn.addActionListener(e -> refreshLeaveRequests());
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonPanel.add(newRequestBtn);
+        buttonPanel.add(refreshBtn);
+
+        panel.add(new JScrollPane(leaveRequestsTable), BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private void refreshLeaveRequests() {
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            String sql = "SELECT * FROM Conges WHERE employe_id = ? ORDER BY id DESC";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, id);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            leaveRequestsTableModel.setRowCount(0);
+            while (rs.next()) {
+                leaveRequestsTableModel.addRow(new Object[]{
+                        rs.getString("date_debut"),
+                        rs.getString("date_fin"),
+                        rs.getString("raison"),
+                        getStatusLabel(rs.getString("statut")),
+                        rs.getString("admin_response")
+                });
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private String getStatusLabel(String status) {
+        switch (status) {
+            case "PENDING": return "En attente";
+            case "APPROVED": return "Approuvée";
+            case "REJECTED": return "Refusée";
+            default: return status;
+        }
     }
 }
+

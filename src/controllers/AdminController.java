@@ -2,8 +2,9 @@ package controllers;
 
 import javax.swing.JFrame;
 
+import views.AddDepartements;
 import views.AddEmployes;
-import views.ManageDepartmentsView;
+import views.AddDepartements;
 import views.AddEmployes;
 
 public class AdminController {
@@ -29,6 +30,6 @@ public class AdminController {
     }
     public void showManageDepatements(JFrame parentFrame){
         parentFrame.dispose();
-        new ManageDepartmentsView().setVisible(true);
+        new AddDepartements().setVisible(true);
     }
 }
